@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # This shellscript generates goreleaser.yaml with ldflags set to the first argument.
 cat <<EOF
 build:
