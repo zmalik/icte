@@ -19,3 +19,4 @@ import "github.com/zmalik/icte/cmd"
 func main() {
 	cmd.Execute()
 }
+

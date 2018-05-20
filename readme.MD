@@ -23,13 +23,25 @@ The above command will monitor
 
 If any of those files changes it executes the command with the args 
 
-### Example
+### Examples:
 
-```
+```bash
 icte /etc/nginx/nginx.conf -c service nginx reload
 ```
 
+```bash
+icte main.go -c restart.sh
+```
 
+**Multiple commands**
+
+```bash
+icte main.go -c build.sh -c restart.sh
+```
+
+```bash
+icte main.go -c 'grep //TODO main.go -c' -c build.sh -c restart.sh
+```
 
 ## Install
 

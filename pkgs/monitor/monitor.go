@@ -1,14 +1,12 @@
 package monitor
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
+	"strings"
 )
 
 var (
@@ -16,7 +14,7 @@ var (
 	watcher      *fsnotify.Watcher
 )
 
-func Monitor(files, command []string) error {
+func Monitor(files []string, commands [][]string) error {
 	for _, file := range files {
 		f, err := os.Stat(file)
 		if err != nil {
@@ -41,10 +39,8 @@ func Monitor(files, command []string) error {
 			case event := <-watcher.Events:
 				switch event.Op {
 				case fsnotify.Write, fsnotify.Rename:
-					stdout, err := execCmd(command...)
-					if err == nil {
-						fmt.Print(stdout)
-					} else {
+					err := execCmd(commands)
+					if err != nil {
 						fmt.Println(err)
 					}
 					if event.Op == fsnotify.Rename {
@@ -80,35 +76,36 @@ func addToMonitor(path string, f os.FileInfo, err error) error {
 	return nil
 }
 
-func execCmd(command ...string) (string, error) {
-	var stdout bytes.Buffer
+func execCmd(commands [][]string) (error) {
 	var cmdToExecute string
-	var args []string
-	if len(command) == 2 {
-		//no args
-		cmdToExecute = command[1]
-		args = make([]string, 0)
-	} else if len(command) > 2 {
-		// with args
-		cmdToExecute = command[1]
-		args = command[2:len(command)]
-	} else {
-		// no command
-		return "", fmt.Errorf("no command specified. %+v", command)
-	}
-
-	cmd := exec.Command(cmdToExecute, args...)
-	cmd.Stdout = &stdout
-	cmd.Stderr = ioutil.Discard
-
-	err := cmd.Run()
-	if exitError, ok := err.(*exec.ExitError); ok {
-		if waitStatus, ok := exitError.Sys().(syscall.WaitStatus); ok {
-			if waitStatus.ExitStatus() == 1 {
-				return "", fmt.Errorf("Error executing command: %s", command)
+	for _, command := range commands {
+		var args []string
+		if len(command) == 2 {
+			//no args
+			cmdToExecute = command[1]
+			args = make([]string, 0)
+			trimmedCommand := strings.Split(command[1], " ")
+			if len(trimmedCommand) > 1 {
+				cmdToExecute = trimmedCommand[0]
+				args = trimmedCommand[1:len(trimmedCommand)]
 			}
+		} else if len(command) > 2 {
+			// with args
+			cmdToExecute = command[1]
+			args = command[2:len(command)]
+
+		} else {
+			// no command
+			return fmt.Errorf("no command specified. %+v", command)
 		}
-		return "", err
+
+		fmt.Println(cmdToExecute, args)
+		output, err := exec.Command(cmdToExecute, args...).CombinedOutput()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		fmt.Print(string(output))
 	}
-	return stdout.String(), nil
+	return nil
+
 }

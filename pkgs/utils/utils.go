@@ -23,14 +23,14 @@ func ValidateArgs(args []string) error {
 
 // responsible for getting files to monitor
 func GetFilesToMonitor(args []string) ([]string, error) {
-	pos := getSeparatorPos(args)
+	pos := getFirstSeparatorPos(args)
 	if pos >= 0 {
 		return args[0:pos], nil
 	}
 	return nil, fmt.Errorf("seperator not found %s", separatorArg)
 }
 
-func getSeparatorPos(args []string) int {
+func getFirstSeparatorPos(args []string) int {
 	for i, item := range args {
 		if item == separatorArg {
 			return i
@@ -39,11 +39,29 @@ func getSeparatorPos(args []string) int {
 	return -1
 }
 
-// responsible for getting command to execute
-func CommandToExecute(args []string) ([]string, error) {
-	pos := getSeparatorPos(args)
-	if pos >= 0 {
-		return args[pos:len(args)], nil
+func getAllSeparatorPos(args []string) []int {
+	separatorPositions := make([]int, 0)
+	for i, item := range args {
+		if item == separatorArg {
+			separatorPositions = append(separatorPositions, i)
+		}
 	}
-	return nil, fmt.Errorf("seperator not found %s", separatorArg)
+	return separatorPositions
+}
+
+// responsible for getting command to execute
+func CommandToExecute(args []string) ([][]string, error) {
+	positions := getAllSeparatorPos(args)
+	commands := make([][]string, 0)
+	for i := 0; i < len(positions); i++ {
+		if i == len(positions) -1{
+			commands = append(commands, args[positions[i]:len(args)])
+		}else{
+			commands = append(commands, args[positions[i]:positions[i+1]])
+		}
+	}
+	if len(commands) == 0 {
+		return nil, fmt.Errorf("seperator not found %s", separatorArg)
+	}
+	return commands, nil
 }
