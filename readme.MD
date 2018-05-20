@@ -8,6 +8,8 @@ The idea is to enable the hot reload
 
 
 
+[![Build Status](https://travis-ci.com/zmalik/icte.svg?branch=master)](https://travis-ci.com/zmalik/icte)
+
 ## Usage
 
 ```
